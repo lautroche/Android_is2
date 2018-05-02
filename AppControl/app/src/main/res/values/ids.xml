@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="et_usuario" type="id" />
-    <item name="et_contrasenha" type="id" />
-    <item name="bt_aceptar" type="id" />
+
 </resources>
