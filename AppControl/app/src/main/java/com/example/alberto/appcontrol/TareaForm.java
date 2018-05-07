@@ -308,9 +308,12 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
                     clientes[i] =  identi+ " " + cod;
 
-                    if(obj.toString().equals(dataImported.getString("idUsuario"))){
-                        savedID=i;
-                    }
+                    try {
+                        if(obj.toString().equals(dataImported.getString("idUsuario"))){
+                            savedID=i;
+                        }
+                    }catch(Exception ex){ }
+
                 }
             }
             catch(Exception ex)
@@ -383,9 +386,13 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
                     String id = obj.getString("idProyecto");
 
                     proyectos[i] =  id+" "+cod;
-                    if(obj.toString().equals(dataImported.getString("idProyecto"))){
-                        savedID=i;
-                    }
+
+                    try {
+                        if(obj.toString().equals(dataImported.getString("idProyecto"))){
+                            savedID=i;
+                        }
+                    }catch(Exception ex){ }
+
                 }
             }
             catch(Exception ex)
@@ -457,9 +464,13 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
 
                     sprints[i] =  cod;
-                    if(obj.toString().equals(dataImported.getString("idProyecto"))){
-                        savedID=i;
-                    }
+                    try {
+                        if(obj.toString().equals(dataImported.getString("idProyecto"))){
+                            savedID=i;
+                        }
+                    }catch(Exception ex){ }
+
+
                 }
             }
             catch(Exception ex)
