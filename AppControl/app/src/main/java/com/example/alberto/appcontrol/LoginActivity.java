@@ -74,7 +74,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
 
                          snackbar.show();
                      }else{
-                         Intent i = new Intent(LoginActivity.this, UsuariosActivity.class);
+                         Intent i = new Intent(LoginActivity.this, ABMActivity.class);
                          startActivity(i);
                      }
 

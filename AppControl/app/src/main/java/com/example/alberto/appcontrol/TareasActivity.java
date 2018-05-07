@@ -1,21 +1,11 @@
 package com.example.alberto.appcontrol;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Activity;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -26,34 +16,42 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import static config.ApiConfig.USUARIOS;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import static config.ApiConfig.TAREAS;
 
 
-public class UsuariosActivity extends Activity {
+public class TareasActivity extends Activity {
 
 private ProgressDialog progress;
 
-	private ListView lstClientes;
+	private TextView lblResultado;
+	private ListView lstTareas;
 	private CoordinatorLayout coordinatorLayout;
-	private String[] clientes;
+	private String[] tareas;
 	private JSONArray respJSON;
 	final CharSequence  opciones[] = new CharSequence[] {"eliminar", "editar"};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_usuarios);
+		setContentView(R.layout.activity_tareas);
 		coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorLayout);
 
 
-        lstClientes = (ListView)findViewById(R.id.lstClientes);
+		lblResultado = (TextView)findViewById(R.id.lblResultado);
+        lstTareas = (ListView)findViewById(R.id.lstTareas);
 		//se crea el loading para la activdad
 		progress = new ProgressDialog(this);
 		progress.setCanceledOnTouchOutside(false);
@@ -64,18 +62,18 @@ private ProgressDialog progress;
 				TareaWSListar tarea = new TareaWSListar();
 				tarea.execute();
 // Inflate header view
-		ViewGroup headerView = (ViewGroup)getLayoutInflater().inflate(R.layout.header, lstClientes,false);
+		ViewGroup headerView = (ViewGroup)getLayoutInflater().inflate(R.layout.header_tareas, lstTareas,false);
 		// Add header view to the ListView
-		lstClientes.addHeaderView(headerView);
+		lstTareas.addHeaderView(headerView);
 
-		lstClientes.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+		lstTareas.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position,
 									final long id) {
 
 
 
-				AlertDialog.Builder builder = new AlertDialog.Builder(UsuariosActivity.this);
+				AlertDialog.Builder builder = new AlertDialog.Builder(TareasActivity.this);
 				builder.setTitle("Opciones");
 				builder.setItems(opciones, new DialogInterface.OnClickListener() {
 					@Override
@@ -90,7 +88,7 @@ private ProgressDialog progress;
 										Toast.LENGTH_SHORT).show();
 								break;
 							case 1:
-								Intent intent = new Intent(UsuariosActivity.this, UsuarioForm.class);
+								Intent intent = new Intent(TareasActivity.this, TareaForm.class);
 								JSONObject obj=null;
 								try {
 									 obj = respJSON.getJSONObject(Integer.parseInt(id+""));
@@ -121,10 +119,10 @@ private ProgressDialog progress;
 			}
 		});
 		FloatingActionButton fab = findViewById(R.id.fab);
-		fab.setOnClickListener(new View.OnClickListener() {
+		fab.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				Intent intent = new Intent(UsuariosActivity.this, UsuarioForm.class);
+				Intent intent = new Intent(TareasActivity.this, TareaForm.class);
 				intent.putExtra("opcion", "agregar");
 
 				startActivityForResult(intent,1000);
@@ -152,7 +150,7 @@ private ProgressDialog progress;
 	    	HttpClient httpClient = new DefaultHttpClient();
 			
 			HttpGet del = 
-					new HttpGet(USUARIOS);
+					new HttpGet(TAREAS);
 			
 			del.setHeader("content-type", "application/json");
 			
@@ -163,7 +161,7 @@ private ProgressDialog progress;
 
 				respJSON = new JSONArray(respStr);
 
-				clientes = new String[respJSON.length()];
+				tareas = new String[respJSON.length()];
 	        			
 	        	for(int i=0; i<respJSON.length(); i++)
 	        	{
@@ -172,14 +170,15 @@ private ProgressDialog progress;
 					Log.e("ServicioRest", obj.toString());
 
 
+					int idTarea = obj.getInt("idTarea");
 
-					String cod = obj.getString("codigoUser");
-		        	String correo = obj.getString("correoUser");
-					int identi = obj.getInt("idUsuario");
-					String empresa = obj.getString("nombreEmpresa");
-					String telefono = obj.getString("telefonoUser");
+		        	String descripcion = obj.getString("descripcion");
+					String tiempoEstimado = obj.getString("tiempoEstimado");
+					String idProyecto = obj.getJSONObject("idProyecto").getString("codigoProyecto");
+					String idSprint = obj.getJSONObject("idSprint").getString("idSprint");
+					String idUsuario = obj.getJSONObject("idUsuario").getString("codigoUser");
 
-	        		clientes[i] = "" + cod + "__" + correo + "__" + identi+ "__" + empresa+ "__" + telefono;
+					tareas[i] = "" + idTarea + "__" + descripcion + "__" + tiempoEstimado+ "__" + idProyecto+ "__" + idSprint+ "__" + idUsuario;
 	        	}
 	        }
 	        catch(Exception ex)
@@ -200,19 +199,19 @@ private ProgressDialog progress;
 			hideActivityIndicator();
 	    	if (result)
 	    	{
-		    	//Rellenamos la lista con los nombres de los clientes
+		    	//Rellenamos la lista con los nombres de los tareas
 	    		//Rellenamos la lista con los resultados
 
 
-				LstViewAdapter adapter=new LstViewAdapter(UsuariosActivity.this,R.layout.rowlayout,R.id.identi,clientes);
+				LstViewTareasAdapter adapter=new LstViewTareasAdapter(TareasActivity.this,R.layout.rowlayout_tareas,R.id.id,tareas);
 				// Bind data to the ListView
-				lstClientes.setAdapter(adapter);
+				lstTareas.setAdapter(adapter);
 
 	        	/*ArrayAdapter<String> adaptador =
-	        		    new ArrayAdapter<String>(UsuariosActivity.this,
-	        		        android.R.layout.simple_list_item_1, clientes);
+	        		    new ArrayAdapter<String>(TareasActivity.this,
+	        		        android.R.layout.simple_list_item_1, tareas);
 	        		 
-	        	lstClientes.setAdapter(adaptador);*/
+	        	lstTareas.setAdapter(adaptador);*/
 	    	}else{
 				Snackbar snackbar = Snackbar
 						.make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
@@ -239,9 +238,9 @@ private ProgressDialog progress;
 			JSONObject obj = respJSON.getJSONObject(Integer.parseInt(id));
 
 
-				Log.e("doInBackground",obj.getInt("idUsuario")+"");
+				Log.e("doInBackground",obj.getInt("idTarea")+"");
 			HttpDelete del =
-					new HttpDelete(USUARIOS +"/"+ obj.getInt("idUsuario"));
+					new HttpDelete(TAREAS +"/"+ obj.getInt("idTarea"));
 
 			del.setHeader("content__type", "application/json");
 
@@ -263,7 +262,7 @@ private ProgressDialog progress;
 			if (result)
 			{
 				Snackbar snackbar = Snackbar
-						.make(coordinatorLayout, "Usuarios eliminado", Snackbar.LENGTH_LONG);
+						.make(coordinatorLayout, "Tareas eliminado", Snackbar.LENGTH_LONG);
 
 				snackbar.show();
 
