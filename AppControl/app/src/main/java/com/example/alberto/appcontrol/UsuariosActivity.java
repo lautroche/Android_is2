@@ -153,9 +153,9 @@ private ProgressDialog progress;
 			
 			HttpGet del = 
 					new HttpGet(USUARIOS);
-			
+
 			del.setHeader("content-type", "application/json");
-			
+
 			try
 	        {
 	        	HttpResponse resp = httpClient.execute(del);

@@ -22,12 +22,22 @@ import android.widget.Toast;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+
+import static config.ApiConfig.HEADER;
+import static config.ApiConfig.LOGIN;
 import static config.ApiConfig.USUARIOS;
+import static config.ApiConfig.CODEUSER;
 
 
 /**
@@ -41,6 +51,8 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
     Cursor query;
     private CoordinatorLayout coordinatorLayout;
     private ProgressBar progressBar;
+    String user;
+    String password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,8 +76,8 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
                 btAceptar.setVisibility(View.INVISIBLE);
                 progressBar.setVisibility(View.VISIBLE);
                 try {
-                     String user = etUsuario.getText().toString();
-                     String password = etContrasenha.getText().toString();
+                     user = etUsuario.getText().toString();
+                     password = etContrasenha.getText().toString();
 
                      if(user.isEmpty()||password.isEmpty()) {
 
@@ -74,8 +86,15 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
 
                          snackbar.show();
                      }else{
-                         Intent i = new Intent(LoginActivity.this, ABMActivity.class);
-                         startActivity(i);
+
+                         TareaLogin tarea = new TareaLogin();
+                         tarea.execute();
+
+
+
+
+                         CODEUSER = user;
+
                      }
 
                     btAceptar.setVisibility(View.VISIBLE);
@@ -110,13 +129,43 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
 
             HttpClient httpClient = new DefaultHttpClient();
 
-            HttpGet del =
-                    new HttpGet(USUARIOS);
 
-            del.setHeader("content-type", "application/json");
+
+
+
+            HttpPost post = new HttpPost(LOGIN);
+            post.setHeader("content-type", "application/x-www-form-urlencoded");
 
             try
             {
+                /* This is how to declare HashMap */
+                HashMap<String, String> hmap = new HashMap<String, String>();
+
+                /*Adding elements to HashMap*/
+                hmap.put("txtNombre", user);
+                hmap.put("txtPass", password);
+
+                StringEntity entity = new StringEntity( getDataString(hmap));
+                post.setEntity(entity);
+                HttpResponse resp = httpClient.execute(post);
+                String respStr = EntityUtils.toString(resp.getEntity());
+                HEADER = resp.getAllHeaders();
+                Log.e("resp",respStr);
+
+
+
+
+                JSONObject respuesta = new JSONObject(respStr);
+
+
+
+
+
+                    String status = respuesta.getString("status");
+                   if(!status.equals("ok")){
+                       resul =false;
+                   }
+
 
             }
             catch(Exception ex)
@@ -137,6 +186,8 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
 
             if (result)
             {
+                Intent i = new Intent(LoginActivity.this, ABMActivity.class);
+                startActivity(i);
 
             }else{
                 Snackbar snackbar = Snackbar
@@ -145,5 +196,19 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
                 snackbar.show();
             }
         }
+    }
+    private String getDataString(HashMap<String, String> params) throws UnsupportedEncodingException {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+        for(Map.Entry<String, String> entry : params.entrySet()){
+            if (first)
+                first = false;
+            else
+                result.append("&");
+            result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+            result.append("=");
+            result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+        }
+        return result.toString();
     }
 }

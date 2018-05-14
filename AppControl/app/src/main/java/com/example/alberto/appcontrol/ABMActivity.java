@@ -23,6 +23,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import static config.ApiConfig.CODEUSER;
 import static config.ApiConfig.USUARIOS;
 
 
@@ -43,7 +44,8 @@ public class ABMActivity extends AppCompatActivity {
         // Defined Array values to show in ListView
         String[] values = new String[] {
                 "Usuarios",
-                "Tareas"
+                "Tareas",
+                "Tareas del " +CODEUSER
         };
 
         // Define a new Adapter
@@ -68,22 +70,27 @@ public class ABMActivity extends AppCompatActivity {
 
                 // ListView Clicked item index
                 int itemPosition     = position;
-
+                Intent i=null;
                 // ListView Clicked item value
                // String  itemValue    = (String) listView.getItemAtPosition(position);
 
                 switch (position) {
                     case 0:
-                        Intent i = new Intent(ABMActivity.this, UsuariosActivity.class);
+                        i = new Intent(ABMActivity.this, UsuariosActivity.class);
                         startActivity(i);
                         break;
                     case 1:
-                        Intent i2 = new Intent(ABMActivity.this, TareasActivity.class);
-                        startActivity(i2);
+                         i = new Intent(ABMActivity.this, TareasActivity.class);
+
+                        break;
+                    case 2:
+                        i = new Intent(ABMActivity.this, TareasActivity.class);
+                        i.putExtra("byCode", true);
                         break;
                     default:
                         break;
                 }
+                startActivity(i);
 
             }
 

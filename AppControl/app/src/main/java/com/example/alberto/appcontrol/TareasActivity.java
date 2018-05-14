@@ -29,6 +29,7 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import static config.ApiConfig.CODEUSER;
 import static config.ApiConfig.TAREAS;
 
 
@@ -148,12 +149,23 @@ private ProgressDialog progress;
 	    	boolean resul = true;
 
 	    	HttpClient httpClient = new DefaultHttpClient();
-			
-			HttpGet del = 
-					new HttpGet(TAREAS);
-			
+			String toSend=TAREAS;
+			String byCode="";
+	    	try {
+				Boolean ok = getIntent().getBooleanExtra("byCode",false);
+				if(ok){
+					byCode="/byCode/"+CODEUSER;
+				}
+			}catch (Exception e){
+
+			}
+			HttpGet del =
+					new HttpGet(toSend+byCode);
+
 			del.setHeader("content-type", "application/json");
-			
+
+
+
 			try
 	        {
 	        	HttpResponse resp = httpClient.execute(del);
