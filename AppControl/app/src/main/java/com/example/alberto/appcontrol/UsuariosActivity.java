@@ -33,6 +33,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import static config.ApiConfig.COOKIE;
+import static config.ApiConfig.GENERIC_ERROR;
 import static config.ApiConfig.USUARIOS;
 
 
@@ -149,13 +151,13 @@ private ProgressDialog progress;
 			showActivityIndicator();
 	    	boolean resul = true;
 
-	    	HttpClient httpClient = new DefaultHttpClient();
+			DefaultHttpClient httpClient = new DefaultHttpClient();
 			
-			HttpGet del = 
+			HttpGet del =
 					new HttpGet(USUARIOS);
 
 			del.setHeader("content-type", "application/json");
-
+			httpClient.setCookieStore(COOKIE);
 			try
 	        {
 	        	HttpResponse resp = httpClient.execute(del);
@@ -185,7 +187,7 @@ private ProgressDialog progress;
 	        catch(Exception ex)
 	        {
 				Snackbar snackbar = Snackbar
-						.make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+						.make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
 				snackbar.show();
 
@@ -215,7 +217,7 @@ private ProgressDialog progress;
 	        	lstClientes.setAdapter(adaptador);*/
 	    	}else{
 				Snackbar snackbar = Snackbar
-						.make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+						.make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
 				snackbar.show();
 			}
@@ -271,7 +273,7 @@ private ProgressDialog progress;
 				tarea.execute();
 			}else{
 				Snackbar snackbar = Snackbar
-						.make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+						.make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
 				snackbar.show();
 			}

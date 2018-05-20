@@ -26,6 +26,8 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import static config.ApiConfig.COOKIE;
+import static config.ApiConfig.GENERIC_ERROR;
 import static config.ApiConfig.PROYECTOS;
 import static config.ApiConfig.SPRINT;
 import static config.ApiConfig.TAREAS;
@@ -45,8 +47,8 @@ public class TareaForm extends AppCompatActivity {
     int identificadorTarea;
 
 
-    EditText descripcionT ;
-    EditText tiempoT ;
+    EditText descripcionT;
+    EditText tiempoT;
     JSONObject dataImported;
     private ProgressDialog progress;
 
@@ -67,12 +69,11 @@ public class TareaForm extends AppCompatActivity {
         try {
 
 
-
             opcion = getIntent().getStringExtra("opcion");
-            Log.e("ServicioRest",opcion);
-            if(opcion.equals("editar")) {
+            Log.e("ServicioRest", opcion);
+            if (opcion.equals("editar")) {
                 data = getIntent().getStringExtra("data");
-                Log.e("ServicioRest",data);
+                Log.e("ServicioRest", data);
 
                 dataImported = new JSONObject(data);
 
@@ -84,12 +85,12 @@ public class TareaForm extends AppCompatActivity {
                 descripcionT.setText(descripcion);
                 tiempoT.setText(tiempo);
 
-           }
+            }
 
 
-        }catch (Exception ex){
+        } catch (Exception ex) {
 
-            Log.e("ServicioRest","Error!", ex);
+            Log.e("ServicioRest", "Error!", ex);
         }
 
 
@@ -97,70 +98,66 @@ public class TareaForm extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(opcion.equals("editar")) {
+                if (opcion.equals("editar")) {
                     TareaWSActualizar tarea = new TareaWSActualizar();
                     tarea.execute();
-                }else{
+                } else {
                     TareaWSInsertar tarea = new TareaWSInsertar();
                     tarea.execute();
                 }
             }
         });
 
-TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
+        TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
         tarea.execute();
         TareaWSListarProyectos tarea2 = new TareaWSListarProyectos();
         tarea2.execute();
 
-        TareaWSListarSprints tarea3= new TareaWSListarSprints();
+        TareaWSListarSprints tarea3 = new TareaWSListarSprints();
         tarea3.execute();
     }
+
     //Tarea As�ncrona para llamar al WS de inserci�n en segundo plano
-    private class TareaWSInsertar extends AsyncTask<String,Integer,Boolean> {
+    private class TareaWSInsertar extends AsyncTask<String, Integer, Boolean> {
 
         protected Boolean doInBackground(String... params) {
             showActivityIndicator();
             boolean resul = true;
 
-            HttpClient httpClient = new DefaultHttpClient();
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            httpClient.setCookieStore(COOKIE);
 
             HttpPost post = new HttpPost(TAREAS);
             post.setHeader("content-type", "application/json");
 
 
-            Spinner proyectos=(Spinner) findViewById(R.id.proyecto_spinner);
+            Spinner proyectos = (Spinner) findViewById(R.id.proyecto_spinner);
             Long proyectoItem = proyectos.getSelectedItemId();
 
-            Spinner usuarios=(Spinner) findViewById(R.id.usuarios_spiner);
+            Spinner usuarios = (Spinner) findViewById(R.id.usuarios_spiner);
             Long usuarioItem = usuarios.getSelectedItemId();
 
-            Spinner sprint=(Spinner) findViewById(R.id.sprint_spinner);
+            Spinner sprint = (Spinner) findViewById(R.id.sprint_spinner);
             Long sprintItem = sprint.getSelectedItemId();
 
-            try
-            {
+            try {
                 //Construimos el objeto cliente en formato JSON
                 JSONObject dato = new JSONObject();
 
                 dato.put("descripcion", descripcionT.getText());
                 dato.put("tiempoEstimado", descripcionT.getText());
-                dato.put("idProyecto",   respJSONProyectos.getJSONObject(proyectoItem.intValue()));
-                dato.put("idSprint",  respJSONSprints.getJSONObject(sprintItem.intValue()));
-                dato.put("idUsuario",  respJSONUsuarios.getJSONObject(usuarioItem.intValue()));
+                dato.put("idProyecto", respJSONProyectos.getJSONObject(proyectoItem.intValue()));
+                dato.put("idSprint", respJSONSprints.getJSONObject(sprintItem.intValue()));
+                dato.put("idUsuario", respJSONUsuarios.getJSONObject(usuarioItem.intValue()));
 
                 StringEntity entity = new StringEntity(dato.toString());
-                Log.e("ServicioRest",entity.toString());
-
-
-
+                Log.e("ServicioRest", entity.toString());
 
 
                 post.setEntity(entity);
                 HttpResponse resp = httpClient.execute(post);
-            }
-            catch(Exception ex)
-            {
-                Log.e("ServicioRest","Error!", ex);
+            } catch (Exception ex) {
+                Log.e("ServicioRest", "Error!", ex);
                 resul = false;
             }
 
@@ -169,12 +166,11 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
         protected void onPostExecute(Boolean result) {
             hideActivityIndicator();
-            if (result)
-            {
+            if (result) {
                 finish();
-            }else{
+            } else {
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
             }
@@ -184,48 +180,45 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
     }
 
     //Tarea As�ncrona para llamar al WS de actualizaci�n en segundo plano
-    private class TareaWSActualizar extends AsyncTask<String,Integer,Boolean> {
+    private class TareaWSActualizar extends AsyncTask<String, Integer, Boolean> {
 
         protected Boolean doInBackground(String... params) {
             showActivityIndicator();
             boolean resul = true;
 
-            HttpClient httpClient = new DefaultHttpClient();
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            httpClient.setCookieStore(COOKIE);
+            HttpPut put = new HttpPut(TAREAS + "/" + identificadorTarea);
 
-            HttpPut put = new HttpPut(TAREAS+"/"+identificadorTarea);
-
-           Log.e("ServicioRest",TAREAS+"/"+identificadorTarea);
+            Log.e("ServicioRest", TAREAS + "/" + identificadorTarea);
             put.setHeader("content-type", "application/json");
-            Spinner proyectos=(Spinner) findViewById(R.id.proyecto_spinner);
+            Spinner proyectos = (Spinner) findViewById(R.id.proyecto_spinner);
             Long proyectoItem = proyectos.getSelectedItemId();
 
-            Spinner usuarios=(Spinner) findViewById(R.id.usuarios_spiner);
+            Spinner usuarios = (Spinner) findViewById(R.id.usuarios_spiner);
             Long usuarioItem = usuarios.getSelectedItemId();
 
-            Spinner sprint=(Spinner) findViewById(R.id.sprint_spinner);
+            Spinner sprint = (Spinner) findViewById(R.id.sprint_spinner);
             Long sprintItem = sprint.getSelectedItemId();
 
-            try
-            {
+            try {
                 //Construimos el objeto cliente en formato JSON
                 JSONObject dato = new JSONObject();
 
 
                 dato.put("descripcion", descripcionT.getText());
                 dato.put("tiempoEstimado", descripcionT.getText());
-                dato.put("idProyecto",   respJSONProyectos.getJSONObject(proyectoItem.intValue()));
-                dato.put("idSprint",  respJSONSprints.getJSONObject(sprintItem.intValue()));
-                dato.put("idUsuario",  respJSONUsuarios.getJSONObject(usuarioItem.intValue()));
-                dato.put("idTarea",  identificadorTarea);
+                dato.put("idProyecto", respJSONProyectos.getJSONObject(proyectoItem.intValue()));
+                dato.put("idSprint", respJSONSprints.getJSONObject(sprintItem.intValue()));
+                dato.put("idUsuario", respJSONUsuarios.getJSONObject(usuarioItem.intValue()));
+                dato.put("idTarea", identificadorTarea);
 
                 StringEntity entity = new StringEntity(dato.toString());
-                Log.e("enviado",dato.toString());
+                Log.e("enviado", dato.toString());
                 put.setEntity(entity);
-               HttpResponse resp = httpClient.execute(put);
-            }
-            catch(Exception ex)
-            {
-                Log.e("ServicioRest","Error!", ex);
+                HttpResponse resp = httpClient.execute(put);
+            } catch (Exception ex) {
+                Log.e("ServicioRest", "Error!", ex);
                 resul = false;
             }
 
@@ -234,12 +227,11 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
         protected void onPostExecute(Boolean result) {
             hideActivityIndicator();
-            if (result)
-            {
+            if (result) {
                 finish();
-            }else{
+            } else {
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
             }
@@ -257,6 +249,7 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
             }
         });
     }
+
     //metodo usado para cerrar el loading dentro de la activdad
     public void hideActivityIndicator() {
         runOnUiThread(new Runnable() {
@@ -269,25 +262,24 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
     }
 
 
-
     //Tarea As�ncrona para llamar al WS de listado en segundo plano
-    private class TareaWSListarUsuarios extends AsyncTask<String,Integer,Boolean> {
-        private int savedID=0;
+    private class TareaWSListarUsuarios extends AsyncTask<String, Integer, Boolean> {
+        private int savedID = 0;
 
 
         protected Boolean doInBackground(String... params) {
             showActivityIndicator();
             boolean resul = true;
 
-            HttpClient httpClient = new DefaultHttpClient();
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            httpClient.setCookieStore(COOKIE);
 
             HttpGet del =
                     new HttpGet(USUARIOS);
 
             del.setHeader("content-type", "application/json");
 
-            try
-            {
+            try {
                 HttpResponse resp = httpClient.execute(del);
                 String respStr = EntityUtils.toString(resp.getEntity());
 
@@ -295,35 +287,32 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
                 clientes = new String[respJSONUsuarios.length()];
 
-                for(int i=0; i<respJSONUsuarios.length(); i++)
-                {
+                for (int i = 0; i < respJSONUsuarios.length(); i++) {
                     JSONObject obj = respJSONUsuarios.getJSONObject(i);
 
                     Log.e("ServicioRest", obj.toString());
 
 
-
                     String cod = obj.getString("codigoUser");
                     int identi = obj.getInt("idUsuario");
 
-                    clientes[i] =  identi+ " " + cod;
+                    clientes[i] = identi + " " + cod;
 
                     try {
-                        if(obj.toString().equals(dataImported.getString("idUsuario"))){
-                            savedID=i;
+                        if (obj.toString().equals(dataImported.getString("idUsuario"))) {
+                            savedID = i;
                         }
-                    }catch(Exception ex){ }
+                    } catch (Exception ex) {
+                    }
 
                 }
-            }
-            catch(Exception ex)
-            {
+            } catch (Exception ex) {
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
 
-                Log.e("ServicioRest","Error!", ex);
+                Log.e("ServicioRest", "Error!", ex);
                 resul = false;
             }
 
@@ -332,7 +321,7 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
         protected void onPostExecute(Boolean result) {
             hideActivityIndicator();
-            if (result)            {
+            if (result) {
 
                 Spinner spinner = (Spinner) findViewById(R.id.usuarios_spiner);
 
@@ -340,9 +329,9 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
                 spinner.setSelection(savedID);
 
-            }else{
+            } else {
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
             }
@@ -350,23 +339,23 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
     }
 
     //Tarea As�ncrona para llamar al WS de listado en segundo plano
-    private class TareaWSListarProyectos extends AsyncTask<String,Integer,Boolean> {
-        private int savedID=0;
+    private class TareaWSListarProyectos extends AsyncTask<String, Integer, Boolean> {
+        private int savedID = 0;
 
 
         protected Boolean doInBackground(String... params) {
             showActivityIndicator();
             boolean resul = true;
 
-            HttpClient httpClient = new DefaultHttpClient();
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            httpClient.setCookieStore(COOKIE);
 
             HttpGet del =
                     new HttpGet(PROYECTOS);
 
             del.setHeader("content-type", "application/json");
 
-            try
-            {
+            try {
                 HttpResponse resp = httpClient.execute(del);
                 String respStr = EntityUtils.toString(resp.getEntity());
 
@@ -374,35 +363,32 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
                 proyectos = new String[respJSONProyectos.length()];
 
-                for(int i=0; i<respJSONProyectos.length(); i++)
-                {
+                for (int i = 0; i < respJSONProyectos.length(); i++) {
                     JSONObject obj = respJSONProyectos.getJSONObject(i);
 
                     Log.e("ServicioRest", obj.toString());
 
 
-
                     String cod = obj.getString("codigoProyecto");
                     String id = obj.getString("idProyecto");
 
-                    proyectos[i] =  id+" "+cod;
+                    proyectos[i] = id + " " + cod;
 
                     try {
-                        if(obj.toString().equals(dataImported.getString("idProyecto"))){
-                            savedID=i;
+                        if (obj.toString().equals(dataImported.getString("idProyecto"))) {
+                            savedID = i;
                         }
-                    }catch(Exception ex){ }
+                    } catch (Exception ex) {
+                    }
 
                 }
-            }
-            catch(Exception ex)
-            {
+            } catch (Exception ex) {
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
 
-                Log.e("ServicioRest","Error!", ex);
+                Log.e("ServicioRest", "Error!", ex);
                 resul = false;
             }
 
@@ -411,7 +397,7 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
         protected void onPostExecute(Boolean result) {
             hideActivityIndicator();
-            if (result)            {
+            if (result) {
 
                 Spinner spinner = (Spinner) findViewById(R.id.proyecto_spinner);
 
@@ -419,32 +405,33 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
                 spinner.setSelection(savedID);
 
-            }else{
+            } else {
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
             }
         }
     }
+
     //Tarea As�ncrona para llamar al WS de listado en segundo plano
-    private class TareaWSListarSprints extends AsyncTask<String,Integer,Boolean> {
-        private int savedID =0;
+    private class TareaWSListarSprints extends AsyncTask<String, Integer, Boolean> {
+        private int savedID = 0;
 
 
         protected Boolean doInBackground(String... params) {
             showActivityIndicator();
             boolean resul = true;
 
-            HttpClient httpClient = new DefaultHttpClient();
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            httpClient.setCookieStore(COOKIE);
 
             HttpGet del =
                     new HttpGet(SPRINT);
 
             del.setHeader("content-type", "application/json");
 
-            try
-            {
+            try {
                 HttpResponse resp = httpClient.execute(del);
                 String respStr = EntityUtils.toString(resp.getEntity());
 
@@ -452,35 +439,32 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
                 sprints = new String[respJSONSprints.length()];
 
-                for(int i=0; i<respJSONSprints.length(); i++)
-                {
+                for (int i = 0; i < respJSONSprints.length(); i++) {
                     JSONObject obj = respJSONSprints.getJSONObject(i);
 
                     Log.e("ServicioRest", obj.toString());
 
 
-
                     String cod = obj.getString("idSprint");
 
 
-                    sprints[i] =  cod;
+                    sprints[i] = cod;
                     try {
-                        if(obj.toString().equals(dataImported.getString("idProyecto"))){
-                            savedID=i;
+                        if (obj.toString().equals(dataImported.getString("idProyecto"))) {
+                            savedID = i;
                         }
-                    }catch(Exception ex){ }
+                    } catch (Exception ex) {
+                    }
 
 
                 }
-            }
-            catch(Exception ex)
-            {
+            } catch (Exception ex) {
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
 
-                Log.e("ServicioRest","Error!", ex);
+                Log.e("ServicioRest", "Error!", ex);
                 resul = false;
             }
 
@@ -489,7 +473,7 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
         protected void onPostExecute(Boolean result) {
             hideActivityIndicator();
-            if (result)            {
+            if (result) {
 
                 Spinner spinner = (Spinner) findViewById(R.id.sprint_spinner);
 
@@ -497,15 +481,14 @@ TareaWSListarUsuarios tarea = new TareaWSListarUsuarios();
 
                 spinner.setSelection(savedID);
 
-            }else{
+            } else {
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
             }
         }
     }
-
 
 
 }

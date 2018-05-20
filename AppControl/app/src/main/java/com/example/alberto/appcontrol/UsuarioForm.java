@@ -22,6 +22,7 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import static config.ApiConfig.GENERIC_ERROR;
 import static config.ApiConfig.USUARIOS;
 
 public class UsuarioForm extends AppCompatActivity {
@@ -164,7 +165,7 @@ public class UsuarioForm extends AppCompatActivity {
                 finish();
             }else{
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
             }
@@ -222,7 +223,7 @@ public class UsuarioForm extends AppCompatActivity {
                 finish();
             }else{
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
             }

@@ -1,7 +1,10 @@
 package com.example.alberto.appcontrol;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -29,7 +32,15 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
 import static config.ApiConfig.CODEUSER;
+import static config.ApiConfig.COOKIE;
+import static config.ApiConfig.GENERIC_ERROR;
 import static config.ApiConfig.TAREAS;
 
 
@@ -49,7 +60,7 @@ private ProgressDialog progress;
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_tareas);
 		coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorLayout);
-
+		FloatingActionButton fab = findViewById(R.id.fab);
 
 		lblResultado = (TextView)findViewById(R.id.lblResultado);
         lstTareas = (ListView)findViewById(R.id.lstTareas);
@@ -59,9 +70,21 @@ private ProgressDialog progress;
 		progress.setCancelable(false);
 
 //se lis por defecto
+		Boolean ok = getIntent().getBooleanExtra("byCode",false);
+		if(ok ){
+			if(CODEUSER==null){
 
-				TareaWSListar tarea = new TareaWSListar();
-				tarea.execute();
+				Intent intent = new Intent(TareasActivity.this, LoginActivity.class);
+				finish();  //Kill the activity from which you will go to next activity
+				startActivity(intent);
+			}else{
+				fab.setImageResource(android.R.drawable.ic_popup_reminder);
+			}
+		}
+
+		TareaWSListar tarea = new TareaWSListar();
+		tarea.execute();
+
 // Inflate header view
 		ViewGroup headerView = (ViewGroup)getLayoutInflater().inflate(R.layout.header_tareas, lstTareas,false);
 		// Add header view to the ListView
@@ -87,6 +110,7 @@ private ProgressDialog progress;
 
 								Toast.makeText(getApplicationContext(), id+"",
 										Toast.LENGTH_SHORT).show();
+
 								break;
 							case 1:
 								Intent intent = new Intent(TareasActivity.this, TareaForm.class);
@@ -119,14 +143,81 @@ private ProgressDialog progress;
 
 			}
 		});
-		FloatingActionButton fab = findViewById(R.id.fab);
+
 		fab.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				Intent intent = new Intent(TareasActivity.this, TareaForm.class);
-				intent.putExtra("opcion", "agregar");
 
-				startActivityForResult(intent,1000);
+				String byCode="";
+				try {
+					Boolean ok = getIntent().getBooleanExtra("byCode",false);
+					if(ok){
+						AlertDialog.Builder builder = new AlertDialog.Builder(TareasActivity.this);
+						builder.setTitle("Recordatorio");
+						builder.setMessage("Quiere agregar un recoradotorio para estas actividades??");
+
+						// add the buttons
+						builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int which) {
+								try {
+									AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+									Intent notificationIntent = new Intent(TareasActivity.this, AlarmReceiver.class);
+									PendingIntent broadcast = PendingIntent.getBroadcast(TareasActivity.this, 5, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+									List<String> fechas = new ArrayList<String>();
+									for(int i=0; i<respJSON.length(); i++)
+									{
+										JSONObject obj = respJSON.getJSONObject(i);
+
+										Log.e("ServicioRest", obj.toString());
+
+
+										int idTarea = obj.getInt("idTarea");
+
+
+										String idSprint = obj.getJSONObject("idSprint").getString("fechaFin");
+										boolean retval = fechas.contains(idSprint);
+
+										if (retval != true) {
+											fechas.add(idSprint);
+										}
+
+
+									}
+
+									for(int i=0; i<fechas.size(); i++) {
+										Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(fechas.get(i));
+										Calendar cal = Calendar.getInstance();
+										cal.setTime(date);
+										cal.add(Calendar.DATE, -1);
+										cal.set(Calendar.HOUR_OF_DAY, 8);
+									//	cal.set(Calendar.MINUTE,23);
+
+                                        Log.e("ServicioRest",cal.toString());
+										alarmManager.setExact(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), broadcast);
+									}
+								}catch (Exception e){
+                                    Log.e("ServicioRest", e.toString());
+								}
+							}
+						});
+
+						builder.setNegativeButton("Cancel", null);
+
+						// create and show the alert dialog
+						AlertDialog dialog = builder.create();
+						dialog.show();
+					}else{
+						Intent intent = new Intent(TareasActivity.this, TareaForm.class);
+						intent.putExtra("opcion", "agregar");
+
+						startActivityForResult(intent,1000);
+					}
+				}catch (Exception e){
+					Log.e("ServicioRest", e.toString());
+				}
+
 			}
 		});
 
@@ -148,7 +239,8 @@ private ProgressDialog progress;
 			showActivityIndicator();
 	    	boolean resul = true;
 
-	    	HttpClient httpClient = new DefaultHttpClient();
+			DefaultHttpClient httpClient = new DefaultHttpClient();
+			httpClient.setCookieStore(COOKIE);
 			String toSend=TAREAS;
 			String byCode="";
 	    	try {
@@ -196,7 +288,7 @@ private ProgressDialog progress;
 	        catch(Exception ex)
 	        {
 				Snackbar snackbar = Snackbar
-						.make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+						.make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
 				snackbar.show();
 
@@ -226,7 +318,7 @@ private ProgressDialog progress;
 	        	lstTareas.setAdapter(adaptador);*/
 	    	}else{
 				Snackbar snackbar = Snackbar
-						.make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+						.make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
 				snackbar.show();
 			}
@@ -242,8 +334,8 @@ private ProgressDialog progress;
 	    	boolean resul = true;
 			try
 			{
-	    	HttpClient httpClient = new DefaultHttpClient();
-
+				DefaultHttpClient httpClient = new DefaultHttpClient();
+				httpClient.setCookieStore(COOKIE);
 			String id = params[0];
 
 
@@ -282,7 +374,7 @@ private ProgressDialog progress;
 				tarea.execute();
 			}else{
 				Snackbar snackbar = Snackbar
-						.make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+						.make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
 				snackbar.show();
 			}

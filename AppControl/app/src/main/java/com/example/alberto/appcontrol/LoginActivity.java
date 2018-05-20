@@ -1,5 +1,8 @@
 package com.example.alberto.appcontrol;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -31,12 +34,14 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
+import static config.ApiConfig.GENERIC_ERROR;
 import static config.ApiConfig.HEADER;
 import static config.ApiConfig.LOGIN;
-import static config.ApiConfig.USUARIOS;
+import static config.ApiConfig.COOKIE;
 import static config.ApiConfig.CODEUSER;
 
 
@@ -67,6 +72,10 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
 
         btAceptar = (Button) findViewById(R.id.bt_aceptar);
         btAceptar.setOnClickListener(this);
+
+
+
+
 
     }
     @Override
@@ -127,7 +136,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
 
             boolean resul = true;
 
-            HttpClient httpClient = new DefaultHttpClient();
+            DefaultHttpClient httpClient = new DefaultHttpClient();
 
 
 
@@ -138,6 +147,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
 
             try
             {
+                 COOKIE = httpClient.getCookieStore();
                 /* This is how to declare HashMap */
                 HashMap<String, String> hmap = new HashMap<String, String>();
 
@@ -171,14 +181,17 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
             catch(Exception ex)
             {
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
 
                 Log.e("ServicioRest","Error!", ex);
                 resul = false;
             }
-
+            // When HttpClient instance is no longer needed,
+            // shut down the connection manager to ensure
+            // immediate deallocation of all system resources
+            httpClient.getConnectionManager().shutdown();
             return resul;
         }
 
@@ -187,14 +200,16 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener 
             if (result)
             {
                 Intent i = new Intent(LoginActivity.this, ABMActivity.class);
+                finish();
                 startActivity(i);
 
             }else{
                 Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Welcome to AndroidHive", Snackbar.LENGTH_LONG);
+                        .make(coordinatorLayout, GENERIC_ERROR, Snackbar.LENGTH_LONG);
 
                 snackbar.show();
             }
+
         }
     }
     private String getDataString(HashMap<String, String> params) throws UnsupportedEncodingException {
